@@ -234,12 +234,34 @@
             margin: 20px auto;
             width: 80%;
         }
+        /* Social media icons */
+.social-icons {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons img {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease;
+}
+
+.social-icons img:hover {
+    transform: scale(1.2);
+}
     </style>
 </head>
 <body>
     <h1>Stick Lab AI</h1>
     <p>Input a scenario, and our Stickman AI will animate the tale.</p>
     <textarea id="storyInput" placeholder="Example: Buying PumpFun Shitcoins"></textarea>
+    <div class="social-icons">
+        <a href="https://x.com/shit_shit_shi" target="_blank">Twitter</a>
+        <a href="https://t.me/+5BIHPyf7nu0wYzE0" target="_blank">Telegram</a>        
+    </div>
     <div class="script-header">
         <textarea id="scriptEditor" placeholder="Edit or write your own script..."></textarea>
         <div class="tooltip-container help-container" style="display: none;">
