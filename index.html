@@ -1,0 +1,676 @@
+<html><head>
+    <meta charset="UTF-8">
+    <title>StickGuys</title>
+    <style>
+        body {
+            position: relative;
+            color: #000;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background-image: url('images/1.png');
+            background-repeat: repeat;
+            background-size: 100px auto;
+            opacity: 0.5;
+            z-index: -1;
+            animation: scrollBackground 20s linear infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: -2; /* Place behind the scrolling background */
+        }
+
+        @keyframes scrollBackground {
+            from {
+                transform: translate(0, 0);
+            }
+            to {
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            color: white;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+        }
+
+        p {
+            color: white;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            font-weight: 300;
+            text-shadow: none;
+        }
+        #conversation {
+            max-width: 800px;
+            margin: 20px auto;
+            display: none;
+            position: relative;
+            height: 400px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .character-container {
+            position: absolute;
+            width: 250px;
+            transition: transform 0.5s ease-out;
+        }
+        #guy1-container {
+            left: -100px;
+            top: 50%;
+            transform: translateY(-50%) translateX(-100%);
+        }
+        #guy2-container {
+            right: -100px;
+            top: 50%;
+            transform: translateY(-50%) translateX(100%);
+        }
+        .character-container img {
+            width: 250px;
+            height: auto;
+        }
+        .dialogue {
+            position: absolute;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            font-size: 1em;
+            text-align: center;
+            width: 80%;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        textarea {
+            display: block;
+            width: 80%;
+            height: 100px;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 3px solid black;
+            padding: 10px;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            font-size: 16px;
+        }
+        button {
+            padding: 0;
+            margin: 10px auto;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: block;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        button img {
+            display: block;
+            width: 190px; /* Default size for other buttons */
+            height: auto;
+        }
+        /* Add specific override for edit script button */
+        #editScriptButton img {
+            width: 150px; /* Changed size to 80px */
+            height: auto;
+        }
+        #loader {
+            display: none;
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: white;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            animation: bounce 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+        #playButton {
+            display: none;
+        }
+        #scriptEditor {
+            width: 80%;
+            height: 150px;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 3px solid black;
+            padding: 10px;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            font-size: 16px;
+            display: none;
+        }
+        #updateScriptButton {
+            margin-right: 10px;
+            display: none; /* This was already set by default */
+        }
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .help-button {
+            background: none;
+            border: 2px solid white;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            cursor: pointer;
+            padding: 0;
+            font-size: 16px;
+            margin: 0;
+            vertical-align: middle;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: left;
+            z-index: 100;
+            font-family: "Comic Sans MS", "Comic Sans", cursive;
+            font-size: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .tooltip code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .script-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stick Lab AI</h1>
+    <p>Input a scenario, and our Stickman AI will animate the tale.</p>
+    <textarea id="storyInput" placeholder="Example: Buying PumpFun Shitcoins"></textarea>
+    <div class="script-header">
+        <textarea id="scriptEditor" placeholder="Edit or write your own script..."></textarea>
+        <div class="tooltip-container help-container" style="display: none;">
+            <button class="help-button" onclick="toggleTooltip()">?</button>
+            <div class="tooltip" id="scriptHelp">
+                <p><b>Script Syntax Guide:</b></p>
+                <p><code>{character}</code> - Switch speaking character (use guy1 or guy2)</p>
+                <p><code>[emotion]</code> - Change current character's emotion</p>
+                <p><code>(emotion)</code> - Set starting emotions</p>
+                <p><b>Available emotions:</b> happy, neutral, sad, think</p>
+                <p><b>Example:</b><br>
+                <code>(happy){guy1}[happytalk]Hey bro!<br>
+                {guy2}[think]Hmm...<br>
+                [sad]Not cool.</code></p>
+            </div>
+        </div>
+    </div>
+
+    <button id="updateScriptButton" style="display: none;" onclick="updateScript()">
+        <img src="images/updatescriptbutton.svg" alt="Update Script" style="width: 150px; height: auto;">
+    </button>
+    <button onclick="generateStory()">
+        <img src="images/Untitled_design__47_-removebg-preview.png" alt="Generate Story" style="width: 150px; height: auto;">
+    </button>
+    <button id="playButton" onclick="playStory()">
+        <img src="images/playagainbutton.svg" alt="Play Again" style="width: 150px; height: auto;">
+    </button>
+    <div id="loader">Generating...</div>
+    <div id="conversation">
+        <div id="guy1-container" class="character-container">
+            <img id="guy1-image" src="/guy1neutral.png" alt="Guy 1">
+        </div>
+        <div id="guy2-container" class="character-container">
+            <img id="guy2-image" src="images/Stickman-PNG-Photos.png" alt="Guy 2">
+        </div> 
+        <div id="dialogue" class="dialogue"></div>
+    </div>
+
+    <script>
+        let currentUtterance = null;
+        let isPlaying = false;
+
+        let bgMusic;
+
+        speechSynthesis.addEventListener('voiceschanged', function() {
+            window.speechSynthesisVoices = speechSynthesis.getVoices();
+        });
+
+        const assets = {
+            'guy1happy': 'images/844c9f562374e19d9a3b508ffde75933-stick-figure-standing.webp',
+            'guy1happytalk': 'images/Stickman-PNG-Photos.png',
+            'guy1neutral': 'images/image-removebg-preview.png',
+            'guy1neutraltalk': 'images/pngwing.com.png',
+            'guy1sad': 'images/pngwing.com (1).png',
+            'guy1sadtalk': 'images/pngwing.com (2).png',
+            'guy1think': 'images/pngwing.com (3).png',
+            'guy2happy': 'images/pngwing.com (4).png',
+            'guy2happytalk': 'images/pngwing.com (5).png',
+            'guy2neutral': 'images/pngwing.com (6).png',
+            'guy2neutraltalk': 'images/pngwing.com (7).png',
+            'guy2sad': 'images/pngwing.com (8).png',
+            'guy2sadtalk': 'images/pngwing.com (9).png',
+            'guy2think': 'images/pngwing.com (9).png'
+        };
+
+        window.onload = function() {
+            bgMusic = new Audio('/Olde Timey.mp3');
+            bgMusic.loop = true;
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(error => {
+                console.log("Audio autoplay failed:", error);
+            });
+        };
+
+        const emotions = ['happy', 'neutral', 'sad', 'think', 'happytalk'];
+        let storySegments = [];
+        const conversationDiv = document.getElementById('conversation');
+        const dialogueDiv = document.getElementById('dialogue');
+        const guy1Image = document.getElementById('guy1-image');
+        const guy2Image = document.getElementById('guy2-image');
+
+        let scriptMode = false;
+
+        function toggleScriptEditor() {
+            const scriptEditor = document.getElementById('scriptEditor');
+            const helpContainer = document.querySelector('.help-container');
+            scriptMode = !scriptMode;
+            
+            if (scriptMode) {
+                scriptEditor.style.display = 'block';
+                helpContainer.style.display = 'inline-block'; // Show help button
+                // If there's a current story, show it in the editor
+                if (storySegments.length > 0) {
+                    let script = '';
+                    let currentCharacter = null;
+                    for (let segment of storySegments) {
+                        if (segment.character !== currentCharacter) {
+                            currentCharacter = segment.character;
+                            script += `{${segment.character}}`;
+                        }
+                        script += `[${segment.emotion}]${segment.text}`;
+                    }
+                    scriptEditor.value = script;
+                }
+            } else {
+                scriptEditor.style.display = 'none';
+                helpContainer.style.display = 'none'; // Hide help button
+                document.getElementById('updateScriptButton').style.display = 'none';
+            }
+        }
+
+        function toggleTooltip() {
+            const tooltip = document.getElementById('scriptHelp');
+            tooltip.classList.toggle('show');
+        }
+
+        // Close tooltip when clicking outside
+        document.addEventListener('click', function(event) {
+            const tooltip = document.getElementById('scriptHelp');
+            const helpButton = event.target.closest('.help-button');
+            
+            if (!helpButton && tooltip.classList.contains('show')) {
+                tooltip.classList.remove('show');
+            }
+        });
+
+        const OPENROUTER_API_KEY = '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';
+const SITE_URL = window.location.origin;
+const SITE_NAME = 'Silly Stories Generator';
+
+async function generateStory() {
+    stopPlayback();
+    const prompt = document.getElementById('storyInput').value;
+    const loader = document.getElementById('loader');
+    const playButton = document.getElementById('playButton');
+    const scriptEditor = document.getElementById('scriptEditor');
+    
+    dialogueDiv.innerHTML = '';
+    conversationDiv.style.display = 'none';
+    loader.style.display = 'block';
+    playButton.style.display = 'none';
+    storySegments = [];
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "anthropic/claude-3-haiku",
+                "messages": [{
+                    "role": "user",
+                    "content": `Generate a casual, Gen Z-style dialog script between guy1 and guy2 based on this prompt: "${prompt}".
+                    Make the dialogue dynamic and realistic, including potential arguments, disagreements, or conflicts.
+                    The conversation can range from friendly banter to heated arguments.
+                    Make the dialogue funny and casual using modern internet slang and expressions like:
+                    - "bro", "buddy", "my guy"
+                    - "fr fr", "no cap", "based"
+                    - "so epic", "lets gooo"
+                    - "wtf", "bruh"
+                    - "nah fam", "sheesh"
+                    - "lowkey", "highkey"
+                    - "no shot", "literally"
+                    - "shit", "ass"
+                    - "weak ass", "dumb ass"
+                    
+                    For arguments, include expressions like:
+                    - "that's cap and you know it"
+                    - "you're actually trippin"
+                    - "i can't with this shit rn"
+                    - "you're being mad toxic"
+                    - "don't even start with that shit"
+                    - "your ass is actually wilding"
+                    - "this ain't it chief"
+                    - "that's some weak ass excuse"
+                    
+                    Use this exact format with emotion tags:
+                    (emotion) for starting emotions
+                    {character} to indicate who is speaking
+                    [emotion] to change current speaker's emotion
+                    Available emotions: happy, neutral, sad, think, happytalk
+                    
+                    Example of the format I need:
+                    (happy){guy1}[happytalk]Yo what's good buddy![neutral]{guy2}[neutraltalk]Not much bro.[sad]{guy1}[sad]Why you acting weird?[think]{guy2}[think]Nah fam, you're trippin.
+                    
+                    IMPORTANT: Make sure to:
+                    1. Start with initial emotions in parentheses
+                    2. Always use {guy1} or {guy2} before dialogue
+                    3. Include emotion tags [happy], [sad], [think], etc before each line
+                    4. Keep Gen Z slang and casual tone throughout
+                    5. Create natural emotional progression
+                    6. End with some kind of resolution or dramatic moment`
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // Extract the story from the OpenRouter API response
+        const generatedScript = data.choices[0].message.content;
+        
+        // Update the script editor with the generated script
+        scriptEditor.value = generatedScript;
+        
+        // Process the script
+        processScript(scriptEditor.value);
+        
+        loader.style.display = 'none';
+        playStory(); // Automatically play the story
+
+        // Show update button if script editor is visible
+        if (scriptMode && document.getElementById('scriptEditor').style.display === 'block') {
+            document.getElementById('updateScriptButton').style.display = 'inline-block';
+        }
+    } catch (error) {
+        console.error('Error generating story:', error);
+        loader.style.display = 'none';
+        dialogueDiv.innerHTML = 'Error generating story. Please try again.';
+        conversationDiv.style.display = 'block';
+    }
+}
+        function processScript(script) {
+            storySegments = [];
+            const lines = script.match(/(\{.*?\}|\[.*?\]|\(.*?\)|[^{}\[\]()]+)/g) || [];
+            let currentCharacter = null;
+            let currentEmotion = {
+                'guy1': 'neutral',
+                'guy2': 'neutral'
+            };
+
+            for (let segment of lines) {
+                segment = segment.trim();
+                
+                if (segment.startsWith('(') && segment.endsWith(')')) {
+                    let emotion = segment.slice(1, -1).toLowerCase();
+                    if (segment.includes('guy1')) {
+                        currentEmotion['guy1'] = emotion.replace('guy1', '');
+                    } else if (segment.includes('guy2')) {
+                        currentEmotion['guy2'] = emotion.replace('guy2', '');
+                    }
+                }
+                else if (segment.startsWith('{') && segment.endsWith('}')) {
+                    currentCharacter = segment.slice(1, -1).toLowerCase();
+                }
+                else if (segment.startsWith('[') && segment.endsWith(']')) {
+                    let emotion = segment.slice(1, -1).toLowerCase();
+                    currentEmotion[currentCharacter] = emotion;
+                }
+                else if (segment.trim()) {
+                    let isTalking = true;
+                    let emotion = currentEmotion[currentCharacter];
+                    
+                    if (emotion === 'think') {
+                        isTalking = false;
+                    }
+
+                    storySegments.push({
+                        text: segment.trim(),
+                        character: currentCharacter,
+                        emotion: emotion,
+                        talking: isTalking
+                    });
+                }
+            }
+        }
+
+        function updateScript() {
+            const scriptEditor = document.getElementById('scriptEditor');
+            stopPlayback();
+            dialogueDiv.innerHTML = '';
+            conversationDiv.style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('playButton').style.display = 'none';
+            
+            processScript(scriptEditor.value);
+            
+            document.getElementById('loader').style.display = 'none';
+            playStory();
+        }
+
+        // Modify the generateStory function to update the script editor immediately
+        const originalGenerateStory = generateStory;
+        generateStory = async function() {
+            await originalGenerateStory();
+            // Show update button if script editor is visible
+            if (scriptMode && document.getElementById('scriptEditor').style.display === 'block') {
+                document.getElementById('updateScriptButton').style.display = 'inline-block';
+            }
+        };
+
+        // Add script change detection
+        document.getElementById('scriptEditor').addEventListener('input', function() {
+            document.getElementById('updateScriptButton').style.display = 'inline-block';
+        });
+
+        function updateCharacterImage(character, emotion, talking) {
+            const img = character === 'guy1' ? guy1Image : guy2Image;
+            const container = character === 'guy1' ? 
+                document.getElementById('guy1-container') : 
+                document.getElementById('guy2-container');
+            
+            // Check if emotion is undefined/null and set to '?' if it is
+            emotion = emotion || '?';
+            
+            let emotionKey = character + emotion;
+            
+            // If the emotion already includes "talk" variation, don't modify it
+            if (talking && emotion !== 'think' && !emotion.includes('talk')) {
+                emotionKey += 'talk';
+            }
+
+            // Use the neutral emotion as fallback if the emotion sprite doesn't exist
+            if (!assets[emotionKey]) {
+                console.warn(`Emotion sprite "${emotionKey}" not found, defaulting to neutral`);
+                emotionKey = character + 'neutral';
+            }
+
+            img.src = assets[emotionKey];
+            img.alt = character + ' ' + emotion;
+
+            if (character === 'guy1') {
+                container.style.transform = 'translateY(-50%) translateX(50%)';
+                document.getElementById('guy2-container').style.transform = 
+                    'translateY(-50%) translateX(200%)';
+            } else {
+                container.style.transform = 'translateY(-50%) translateX(-50%)';
+                document.getElementById('guy1-container').style.transform = 
+                    'translateY(-50%) translateX(-200%)';
+            }
+        }
+
+        function resetCharacterPositions() {
+            document.getElementById('guy1-container').style.transform = 
+                'translateY(-50%) translateX(-100%)';
+            document.getElementById('guy2-container').style.transform = 
+                'translateY(-50%) translateX(100%)';
+        }
+
+        function playStory() {
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+            
+            isPlaying = true;
+            dialogueDiv.innerHTML = '';
+            conversationDiv.style.display = 'block';
+            playButton.style.display = 'none';
+            resetCharacterPositions();
+
+            function playSegment(index) {
+                if (!isPlaying || index >= storySegments.length) {
+                    playButton.style.display = 'inline-block';
+                    isPlaying = false;
+                    return;
+                }
+
+                const segment = storySegments[index];
+                dialogueDiv.innerHTML = segment.text;
+                updateCharacterImage(segment.character, segment.emotion, segment.talking);
+                
+                try {
+                    currentUtterance = new SpeechSynthesisUtterance(segment.text);
+                    
+                    const voices = speechSynthesis.getVoices();
+                    
+                    if (segment.character === 'guy1') {
+                        currentUtterance.voice = voices.find(voice => 
+                            voice.lang.startsWith('en') && voice.name.toLowerCase().includes('male')) ||
+                            voices.find(voice => voice.lang.startsWith('en'));
+                    } else {
+                        currentUtterance.voice = voices.find(voice => 
+                            voice.lang.startsWith('en') && voice.name.toLowerCase().includes('female')) ||
+                            voices.find(voice => voice.lang.startsWith('en'));
+                    }
+                    
+                    currentUtterance.onend = function() {
+                        currentUtterance = null;
+                        if (isPlaying) {
+                            playSegment(index + 1);
+                        }
+                    };
+
+                    currentUtterance.onerror = function(event) {
+                        console.error('Speech synthesis error:', event);
+                        currentUtterance = null;
+                        if (isPlaying) {
+                            playSegment(index + 1);
+                        }
+                    };
+
+                    speechSynthesis.speak(currentUtterance);
+                } catch (error) {
+                    console.error('Error in speech synthesis:', error);
+                    currentUtterance = null;
+                    if (isPlaying) {
+                        playSegment(index + 1);
+                    }
+                }
+            }
+
+            if (speechSynthesis.getVoices().length === 0) {
+                speechSynthesis.addEventListener('voiceschanged', function() {
+                    playSegment(0);
+                }, { once: true });
+            } else {
+                playSegment(0);
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            isPlaying = false;
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+        });
+
+        function stopPlayback() {
+            isPlaying = false;
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+            currentUtterance = null;
+            playButton.style.display = 'inline-block';
+        }
+    </script>
+
+</body></html>
